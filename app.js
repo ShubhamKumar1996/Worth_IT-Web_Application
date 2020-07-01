@@ -1,5 +1,5 @@
 // Inbuild Packages.
-
+const path = require("path");
 // End of Inbuilt Packages.
 //________________________________________________________
 // Third Party Packages.
@@ -25,12 +25,13 @@ const shopRoutes = require("./routes/shop");
    so that we don't need to do it manually.
 */
 app.use(bodyParser.urlencoded({extended:false}));  
+app.use(express.static(path.join(__dirname, "public")));
 
 app.use("/admin", adminRoutes);
 app.use(shopRoutes);
 
 app.use((req, res, next)=>{                         // Page Not Found Middleware.
-    res.status(404).send("<h1>Page Not Found</h1>");
+    res.status(404).sendFile(path.join(__dirname, "views", "404.html"));
 });
 // End of MiddleWares.
 //_________________________________________________________
