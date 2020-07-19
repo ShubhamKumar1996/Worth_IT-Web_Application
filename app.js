@@ -21,8 +21,9 @@ app.set("views", "views");
 
 // Importing User Defined Modules.
 
-const adminData = require("./routes/admin");
+const adminRoutes = require("./routes/admin");
 const shopRoutes = require("./routes/shop");
+const errorController = require("./controllers/error");
 // End of User Defined Modules.
 //_________________________________________________________
 
@@ -35,15 +36,10 @@ const shopRoutes = require("./routes/shop");
 app.use(bodyParser.urlencoded({extended:false}));  
 app.use(express.static(path.join(__dirname, "public")));
 
-app.use("/admin", adminData.routes);
+app.use("/admin", adminRoutes);
 app.use(shopRoutes);
 
-app.use((req, res, next)=>{                         // Page Not Found Middleware.
-    res.render("404.ejs", {
-        pageTitle: "Page Not Found",
-        path: ""
-    });
-});
+app.use(errorController.get404);
 // End of MiddleWares.
 //_________________________________________________________
 
