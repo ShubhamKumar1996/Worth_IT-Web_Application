@@ -19,13 +19,18 @@ exports.postAddProduct = (req, res, next)=>{
 }
 
 exports.getProducts = (req, res, next)=>{
-    const products = Product.fetchAll();
-    res.render("shop", {
-        prods: products,
-        pageTitle: "Shop",
-        path: "/",
-        hasProducts: products.length > 0,
-        activeShop: true,
-        productCSS: true
+    // Code written inside the fetchAll() is a function() which is being
+    // passed as an argument and later it get executed in fetchAll() fucntion
+    // itself where we are calling this callback function.
+    Product.fetchAll((products)=>{
+        res.render("shop", {
+            prods: products,
+            pageTitle: "Shop",
+            path: "/",
+            hasProducts: products.length > 0,
+            activeShop: true,
+            productCSS: true
+
+        });
     });
 }
