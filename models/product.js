@@ -22,7 +22,8 @@ const getProductsFromFile = (cb) => {
 
 // Creating Class Product as Product is Important aspect of out site.
 module.exports = class Product {
-    constructor(title, imageUrl, description, price){
+    constructor(id, title, imageUrl, price, description){
+        this.id = id;
         this.title = title;
         this.imageUrl = imageUrl;
         this.description = description;
@@ -30,12 +31,25 @@ module.exports = class Product {
     }
 
     save(){
-        this.id = Math.random().toString();
         getProductsFromFile((products) => {
-            products.push(this);
-            fs.writeFile(p, JSON.stringify(products), (err)=>{
-                console.log(err);
-            });
+            if(this.id) {
+                const existingProductIndex = products.findIndex(product => product.id===this.id);
+                const updatedProducts = [...products];
+                updatedProducts[existingProductIndex] = this;
+                fs.writeFile(p, JSON.stringify(updatedProducts), (err)=>{
+                    if(err){
+                        console.log(err);
+                    }
+                });
+            } else {
+                this.id = Math.random().toString();
+                products.push(this);
+                fs.writeFile(p, JSON.stringify(products), (err)=>{
+                    if(!err){
+                        console.log(err);
+                    }
+                });
+            }
         });
     }
 
@@ -48,5 +62,16 @@ module.exports = class Product {
             const product = products.find(element =>{ return element.id===id; });
             cb(product);
         });
+    }
+
+    static deleteById(id){
+        getProductsFromFile((products) => {
+            let updatedProducts = products.filter(product => product.id!==id);
+            fs.writeFile(p, JSON.stringify(updatedProducts), (err)=>{
+                if(!err){
+                    console.log(err);
+                }
+            });
+        })
     }
 };
