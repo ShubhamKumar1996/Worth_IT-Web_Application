@@ -8,6 +8,9 @@ const express = require("express");  // Importing express Module.
 const app = express();  //Initializing object which will give us access to various functionality.
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
+const session = require("express-session");              // For using session
+const MongoDBStore = require("connect-mongodb-session")(session);
+
 
 // End Of Third Party Packages.
 //________________________________________________________
@@ -16,6 +19,7 @@ const mongoose = require("mongoose");
 
 app.set("view engine", "ejs");
 app.set("views", "views");
+const MONGODB_URI = "mongodb+srv://nimcetshubhamkumar:namenames@cluster0.63s8y.mongodb.net/shop";
 
 // End of global declarations
 //____________________________________________________
@@ -24,6 +28,7 @@ app.set("views", "views");
 
 const adminRoutes = require("./routes/admin");
 const shopRoutes = require("./routes/shop");
+const authRoutes = require("./routes/auth");
 const errorController = require("./controllers/error");  // Importing logic directly.
 const User = require("./models/user");
 // End of User Defined Modules.
@@ -37,17 +42,34 @@ const User = require("./models/user");
 */
  app.use(bodyParser.urlencoded({extended:false}));  
  app.use(express.static(path.join(__dirname, "public")));   // Middleware for loading static files.
+ 
+ const store = new MongoDBStore({                           // constructing store to store session.
+    uri: MONGODB_URI,
+    collection: "sessions"
+ })
+
+ app.use(session({                                          // Session Middleware.
+    secret: "my secret",
+    resave: false,
+    saveUninitialized: false,
+    store: store
+   })
+ );
 
  app.use((req, res, next) => {                              // Setting User Manually.
-    User.findById("5f43bfe2946baf2830d1089f")
-      .then(user => {
-         req.user = user
-         next();
-      })
-      .catch(err => console.log(err));
+   if(!req.session.user){
+      return next();
+   }
+   User.findById(req.session.user._id)
+   .then(user => {
+     req.user = user;
+     next();
+   })
+   .catch(err => console.log(err));
  });
 
 app.use("/admin", adminRoutes);
+app.use(authRoutes);
 app.use(shopRoutes);
 
 app.use(errorController.get404);
@@ -61,7 +83,7 @@ app.use(errorController.get404);
 // Connection With MongoDB using Mongoose. If we successfully connected to MongoDB then we will spin up the server.
 mongoose
    .connect(
-      "mongodb+srv://nimcetshubhamkumar:namenames@cluster0.63s8y.mongodb.net/shop?retryWrites=true&w=majority", {useNewUrlParser: true, useUnifiedTopology: true, useFindAndModify: false}
+      MONGODB_URI, {useNewUrlParser: true, useUnifiedTopology: true, useFindAndModify: false}
       )
    .then(result => {
       User.findOne()
