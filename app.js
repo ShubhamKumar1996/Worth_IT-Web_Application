@@ -10,6 +10,7 @@ const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
 const session = require("express-session");              // For using session
 const MongoDBStore = require("connect-mongodb-session")(session);
+const csrf = require('csurf');
 
 
 // End Of Third Party Packages.
@@ -47,6 +48,8 @@ const User = require("./models/user");
     uri: MONGODB_URI,
     collection: "sessions"
  })
+ const csrfProtection = csrf();  // Here we get the  csrf protection middleware.
+
 
  app.use(session({                                          // Session Middleware.
     secret: "my secret",
@@ -55,6 +58,8 @@ const User = require("./models/user");
     store: store
    })
  );
+
+ app.use(csrfProtection);
 
  app.use((req, res, next) => {                              // Setting User Manually.
    if(!req.session.user){
@@ -66,6 +71,12 @@ const User = require("./models/user");
      next();
    })
    .catch(err => console.log(err));
+ });
+
+ app.use((req, res, next) => {
+   res.locals.isAuthenticated = req.session.isLoggedIn;
+   res.locals.csrfToken = req.csrfToken();
+   next();
  });
 
 app.use("/admin", adminRoutes);
@@ -86,15 +97,6 @@ mongoose
       MONGODB_URI, {useNewUrlParser: true, useUnifiedTopology: true, useFindAndModify: false}
       )
    .then(result => {
-      User.findOne()
-      .then(user => {
-         if(!user){
-            user = new User({
-               name: "shubham", email: "shubham@gmail.com", items: []
-            });
-            user.save();
-         }
-      })
       app.listen(8080);
    })
    .catch(err => console.log(err));
